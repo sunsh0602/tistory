@@ -1703,6 +1703,15 @@ a:active {
   border-bottom: 1px solid #000;
 }
 
+.entry-content pre:has(> code) {
+  margin: -2px 0 0;
+  padding: 0;
+  background: transparent;
+  white-space: pre;
+  word-wrap: normal;
+  word-break: normal;
+}
+
 .entry-content pre {
   word-break: break-word;
   white-space: pre-wrap;
@@ -4420,13 +4429,161 @@ hr[data-ke-style='style8'],
 }
 
 /* 코드 블럭 */
-#article-view pre code.hljs {
+#article-view pre:has(> code) {
+  margin: -2px 0 0;
+  padding: 0;
+  background: transparent;
+  white-space: pre;
+  word-wrap: normal;
+  line-height: 1.2;
+}
+
+#article-view pre:has(> code) code.hljs,
+#article-view pre:has(> code) > code {
+  display: block;
+  padding: 1em 1.2em;
+  border-radius: 0 0 6px 6px;
   font-size: 14px;
-  padding: 20px;
-  font-family: SF Mono, Menlo, Consolas, Monaco, monospace;
-  border: solid 1px #ebebeb;
-  line-height: 1.71;
-  overflow: auto;
+  font-family: 'D2Coding', SF Mono, Menlo, Consolas, Monaco, monospace;
+  line-height: 1.6;
+  max-height: 600px;
+  overflow: auto !important;
+  border: none;
+  background-color: #282c34 !important;
+  color: #abb2bf;
+}
+
+/* 줄번호 있을 때 왼쪽 여백 축소 */
+#article-view pre:has(> code) code.hljs:has(table.hljs-ln),
+#article-view pre:has(> code) > code:has(table.hljs-ln),
+.entry-content pre:has(> code) code.hljs:has(table.hljs-ln) {
+  padding: 10px 16px 10px 4px;
+}
+
+/* 코드블럭 줄번호 */
+#article-view table.hljs-ln .hljs-ln-line,
+.entry-content table.hljs-ln .hljs-ln-line {
+  line-height: 1.6;
+}
+
+#article-view table.hljs-ln td,
+.entry-content table.hljs-ln td {
+  padding: 0 !important;
+  line-height: 1.6;
+  vertical-align: top;
+}
+
+#article-view .hljs-ln-numbers,
+.entry-content .hljs-ln-numbers {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  text-align: center;
+  vertical-align: top;
+  color: #5c6370;
+  border-right: 1px solid #3e4451;
+  width: 28px;
+  min-width: 28px;
+  max-width: 28px;
+  padding: 0 6px !important;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+#article-view .hljs-ln-code,
+.entry-content .hljs-ln-code {
+  padding-left: 10px !important;
+  line-height: 1.6;
+}
+
+#article-view table.hljs-ln,
+.entry-content table.hljs-ln {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* 코드블럭 래퍼 + 복사 버튼 */
+.code-block-wrap {
+  position: relative;
+  margin-bottom: 1.5em;
+}
+
+.code-block-wrap .code-copy-btn {
+  position: absolute;
+  top: 38px;
+  right: 10px;
+  z-index: 2;
+  opacity: 0;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-family: 'D2Coding', SF Mono, Menlo, Consolas, Monaco, monospace;
+  color: #abb2bf;
+  background-color: rgba(40, 44, 52, 0.92);
+  border: 1px solid #3e4451;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.code-block-wrap:hover .code-copy-btn {
+  opacity: 1;
+}
+
+.code-block-wrap .code-copy-btn:hover,
+.code-block-wrap .code-copy-btn.is-copied {
+  color: #54BC4B;
+  border-color: #54BC4B;
+}
+
+.code-block-wrap .code-copy-btn.is-copied {
+  opacity: 1;
+}
+
+/* 코드블럭 헤더 (언어명, 열기/닫기, 줄바꿈) */
+.codeLabel {
+  position: relative;
+  margin: 1em 0 0;
+}
+
+.codeLabel * {
+  user-select: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.codeLabel > div {
+  display: inline-block;
+  color: #3fc9ff;
+  font-weight: 700;
+  text-transform: uppercase;
+  background-color: #282c34;
+  padding: 6px 15px;
+  border-radius: 10px 10px 0 0;
+  font-family: 'D2Coding', SF Mono, Menlo, Consolas, Monaco, monospace;
+}
+
+.codeLabel span {
+  color: #888;
+  margin: 0 0 0 10px;
+}
+
+.codeLabel span ~ label {
+  position: absolute;
+  right: 0;
+  top: 6px;
+  color: #888;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.codeLabel span ~ label input {
+  height: auto !important;
+  padding: 0 !important;
+  margin: 0 4px 0 0 !important;
+  vertical-align: middle;
+  cursor: pointer;
 }
 
 /* 접은 글 */

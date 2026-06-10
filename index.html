@@ -40,6 +40,10 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tocbot/4.11.1/tocbot.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tocbot/4.11.1/tocbot.css">
+  <!-- 코드블럭 highlight.js (CSS만 head에, JS는 본문 하단에서 재로드) -->
+  <link rel="stylesheet" id="hljs-dark-theme" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <!-- 코드블럭 D2Coding 폰트 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_three@1.0/D2Coding.css">
 </head>
 
 <body id="[##_body_id_##]"
@@ -746,6 +750,259 @@
     </div>
   </s_t3>
   <script src="./images/script.js"></script>
+  <script>
+    (function ($) {
+      var showTxt = '열기';
+      var hideTxt = '닫기';
+      var HLJS_URL = 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js';
+      var HLJS_LN_URL = 'https://cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js';
+      var HLJS_CSS = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css';
+
+      function getCodeBlocks() {
+        return $('#article-view pre, .entry-content pre').filter(function () {
+          return $(this).children('code').length > 0;
+        });
+      }
+
+      function stripTistoryHighlight() {
+        $('link[href*="highlight.js"]').not('#hljs-dark-theme').remove();
+      }
+
+      function ensureDarkTheme() {
+        stripTistoryHighlight();
+        if (!document.getElementById('hljs-dark-theme')) {
+          var link = document.createElement('link');
+          link.id = 'hljs-dark-theme';
+          link.rel = 'stylesheet';
+          link.href = HLJS_CSS;
+          document.head.appendChild(link);
+        }
+      }
+
+      function resolveLanguage(pre) {
+        var lang = pre.getAttribute('data-ke-language');
+        if (lang) return lang;
+
+        var fromClass = (pre.className || '').split(/\s+/).filter(function (name) {
+          return name && name !== 'hljs' && name.indexOf('language-') !== 0;
+        })[0];
+
+        return fromClass || '';
+      }
+
+      function setupCodeLabels() {
+        getCodeBlocks().each(function () {
+          var pre = this;
+          if ($(pre).prev('.codeLabel').length) return;
+
+          var code = resolveLanguage(pre) || 'code';
+          var $labelDiv = $('<div>');
+          var $labelBtn = $('<span>');
+          var $wrapBtn = $('<label><input type="checkbox"> 줄바꿈</label>');
+          var $code = $(pre).find('code').first();
+          var codeHtml = $code.html() || '';
+
+          if (codeHtml.search('&lt;hide/&gt;\n') > -1 || pre.dataset.hide) {
+            $code.html(codeHtml.replace('&lt;hide/&gt;\n', ''));
+            $labelBtn.text(showTxt);
+            $wrapBtn.hide();
+            $(pre).hide();
+            $(pre).attr('data-hide', '1');
+          } else {
+            $labelBtn.text(hideTxt);
+            $(pre).show();
+          }
+
+          $labelBtn.on('click', function () {
+            var txt = $(this).text();
+            $(this).text(txt === showTxt ? hideTxt : showTxt);
+            if (txt === showTxt) {
+              $wrapBtn.show();
+              $(pre).removeAttr('data-hide');
+            } else {
+              $wrapBtn.hide();
+            }
+            $(pre).toggle();
+          });
+
+          $labelDiv.on('click', function () {
+            $labelBtn.triggerHandler('click');
+          });
+
+          $wrapBtn.find('input').first().on('click', function (e) {
+            e.stopPropagation();
+            $(pre).css({
+              'white-space': this.checked ? 'pre-wrap' : 'pre',
+              'word-wrap': this.checked ? 'break-word' : 'normal'
+            });
+          });
+
+          $(pre).css({ 'white-space': 'pre', 'word-wrap': 'normal' });
+          $labelDiv.text(code).prop('title', code + ' - ' + showTxt + '/' + hideTxt);
+
+          $('<div class="codeLabel">')
+            .append($labelDiv)
+            .append($labelBtn)
+            .append($wrapBtn)
+            .insertBefore(pre);
+        });
+      }
+
+      function wrapCodeBlocks() {
+        getCodeBlocks().each(function () {
+          var pre = this;
+          if ($(pre).parent('.code-block-wrap').length) return;
+
+          var $wrap = $('<div class="code-block-wrap"></div>');
+          var $label = $(pre).prev('.codeLabel');
+
+          if ($label.length) {
+            $wrap.insertBefore($label);
+            $wrap.append($label);
+          } else {
+            $wrap.insertBefore(pre);
+          }
+
+          $wrap.append(pre);
+          $('<button type="button" class="code-copy-btn" title="코드 복사">복사</button>').appendTo($wrap);
+        });
+      }
+
+      function setupCopyButtons() {
+        $(document).off('click.codeCopy').on('click.codeCopy', '.code-copy-btn', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          var $btn = $(this);
+          var codeEl = $btn.closest('.code-block-wrap').find('pre code')[0];
+          if (!codeEl) return;
+
+          var text = codeEl.innerText || codeEl.textContent;
+
+          function onCopied() {
+            $btn.addClass('is-copied').text('복사됨');
+            setTimeout(function () {
+              $btn.removeClass('is-copied').text('복사');
+            }, 2000);
+          }
+
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(onCopied);
+            return;
+          }
+
+          var textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.style.position = 'fixed';
+          textarea.style.left = '-9999px';
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          onCopied();
+        });
+      }
+
+      function applyLanguageClasses() {
+        getCodeBlocks().each(function () {
+          var pre = this;
+          var codeEl = pre.querySelector('code');
+          if (!codeEl) return;
+
+          var lang = resolveLanguage(pre);
+          if (lang && !/language-/.test(codeEl.className)) {
+            codeEl.classList.add('language-' + lang);
+          }
+        });
+      }
+
+      function runHighlight() {
+        applyLanguageClasses();
+        if (typeof hljs === 'undefined') return;
+
+        getCodeBlocks().find('code').each(function () {
+          if (this.querySelector('table.hljs-ln')) return;
+          if (this.dataset.hljsApplied) return;
+
+          if (hljs.highlightElement) {
+            hljs.highlightElement(this);
+          } else if (hljs.highlightBlock) {
+            hljs.highlightBlock(this);
+          }
+          this.dataset.hljsApplied = '1';
+        });
+      }
+
+      function applyLineNumbers() {
+        if (typeof hljs === 'undefined' || typeof hljs.lineNumbersBlock !== 'function') return;
+
+        getCodeBlocks().find('code.hljs').each(function () {
+          if (this.querySelector('table.hljs-ln')) return;
+          hljs.lineNumbersBlock(this);
+        });
+      }
+
+      function syncLabelColors() {
+        var $code = getCodeBlocks().find('code').first();
+        if (!$code.length) return;
+
+        var col = window.getComputedStyle($code[0], null).getPropertyValue('color');
+        var bgc = window.getComputedStyle($code[0], null).getPropertyValue('background-color');
+        $('.codeLabel div').css({ color: col, 'background-color': bgc });
+      }
+
+      function loadHljs(callback) {
+        if (window.hljs && hljs.versionString && hljs.versionString.indexOf('11.') === 0) {
+          callback();
+          return;
+        }
+
+        window.hljs = undefined;
+        var script = document.createElement('script');
+        script.src = HLJS_URL;
+        script.onload = callback;
+        document.body.appendChild(script);
+      }
+
+      function loadHljsLn(callback) {
+        if (typeof hljs !== 'undefined' && typeof hljs.lineNumbersBlock === 'function') {
+          callback();
+          return;
+        }
+
+        var script = document.createElement('script');
+        script.src = HLJS_LN_URL;
+        script.onload = callback;
+        document.body.appendChild(script);
+      }
+
+      function initCodeBlocks() {
+        ensureDarkTheme();
+        setupCodeLabels();
+        wrapCodeBlocks();
+        setupCopyButtons();
+        loadHljs(function () {
+          runHighlight();
+          loadHljsLn(function () {
+            applyLineNumbers();
+            syncLabelColors();
+          });
+        });
+      }
+
+      initCodeBlocks();
+      $(window).on('load', function () {
+        ensureDarkTheme();
+        loadHljs(function () {
+          runHighlight();
+          loadHljsLn(function () {
+            applyLineNumbers();
+            syncLabelColors();
+          });
+        });
+      });
+    })(jQuery);
+  </script>
   <script>
     (function () {
       var content = document.querySelector('.entry-content');
