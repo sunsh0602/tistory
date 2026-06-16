@@ -373,7 +373,7 @@ a:active {
 
 #container .content-wrap {
   display: grid;
-  grid-template-columns: 15fr 65fr 20fr;
+  grid-template-columns: 20fr 60fr 20fr;
   align-items: stretch;
   gap: 0;
   width: 100%;
